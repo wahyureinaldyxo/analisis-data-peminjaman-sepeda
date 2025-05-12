@@ -4,9 +4,9 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # Load data
-day_df = pd.read_csv('day.csv')
-hour_df = pd.read_csv('hour.csv')
-#D:\Bike-sharing-dataset\day.csv
+day_df = pd.read_csv('day_clean.csv')
+hour_df = pd.read_csv('hour_clean.csv')
+
 
 # Preprocessing
 day_df['workingday_label'] = day_df['workingday'].map({0: 'Weekend/Holiday', 1: 'Working Day'})
