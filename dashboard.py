@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker 
 
 
 # Load data
@@ -27,31 +28,11 @@ day_df['season_label'] = day_df['season'].map({
 
 # Layout dashboard
 st.title('🚲 Bike Sharing Exploratory Data Analysis')
-st.write('Analisis peminjaman sepeda berdasarkan waktu, cuaca, dan hari')
+st.write('Analisis peminjaman sepeda berdasarkan cuaca dan hari')
 
 # Sidebar - Filter
 st.sidebar.header('Filter Data')
 
-# Filter musim
-selected_season = st.sidebar.multiselect(
-    'Pilih Musim:',
-    options=day_df['season_label'].unique(),
-    default=day_df['season_label'].unique()
-)
-
-# Filter cuaca
-selected_weather = st.sidebar.multiselect(
-    'Pilih Cuaca:',
-    options=day_df['weathersit_label'].unique(),
-    default=day_df['weathersit_label'].unique()
-)
-
-# Filter working day
-selected_workingday = st.sidebar.multiselect(
-    'Pilih Tipe Hari:',
-    options=day_df['workingday_label'].unique(),
-    default=day_df['workingday_label'].unique()
-)
 
 # Filter tanggal
 min_date = day_df['date'].min().date()
@@ -71,49 +52,59 @@ else:
 
 # Terapkan filter ke dataframe
 filtered_df = day_df[
-    (day_df['season_label'].isin(selected_season)) &
-    (day_df['weathersit_label'].isin(selected_weather)) &
-    (day_df['workingday_label'].isin(selected_workingday)) &
     (day_df['date'].dt.date >= start_date) &
     (day_df['date'].dt.date <= end_date)
 ]
 
-# Tampilkan data setelah difilter
-st.subheader('🔍 Preview Data yang Difilter')
-st.dataframe(filtered_df.head())
 
 # Plot 1: Rata-rata peminjaman berdasarkan Working Day
-st.subheader('📊 Rata-rata Peminjaman Berdasarkan Working Day')
+st.subheader('Rata-rata Peminjaman Berdasarkan Workingday')
 fig1, ax1 = plt.subplots()
 sns.barplot(x='workingday_label', y='cnt', data=filtered_df, ci=None, ax=ax1)
 ax1.set_xlabel('Tipe Hari')
 ax1.set_ylabel('Rata-rata Jumlah Peminjaman')
+ax1.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{int(x)}'))
 st.pyplot(fig1)
 
 # Plot 2: Rata-rata peminjaman berdasarkan Cuaca
-st.subheader('📊 Rata-rata Peminjaman Berdasarkan Cuaca')
+st.subheader('Rata-rata Peminjaman Berdasarkan Cuaca')
 fig2, ax2 = plt.subplots()
-sns.barplot(x='weathersit_label', y='cnt', data=filtered_df, ci=None, ax=ax2)
-ax2.set_xlabel('Tipe Cuaca')
+sns.barplot(x='weathersit_label', y='cnt', data=filtered_df, order=['Clear', 'Mist/Cloudy', 'Light Snow/Rain', 'Heavy Rain/Snow'], ci=None, ax=ax2)
+ax2.set_xlabel('Kondisi Cuaca')
 ax2.set_ylabel('Rata-rata Jumlah Peminjaman')
+ax2.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{int(x)}'))
 st.pyplot(fig2)
 
 # Insight
-st.subheader('🧐 Insight Utama')
+st.subheader('Insight 1')
 st.markdown("""
-- **Working Day** cenderung memiliki peminjaman lebih banyak dibandingkan Weekend/Holiday.
-- **Working Day** peminjaman banyak dilakukan oleh pekerja dan anak sekolah
-- **Holiday** Peminjaman banyak dilakukan oleh orang yang ingin berekreasi, berwisata, dan berjalan santai
-- **Cuaca cerah (Clear)** mendorong peminjaman sepeda yang lebih tinggi.
-- Anda dapat memfilter data untuk melihat tren per musim dan rentang waktu tertentu.
+ Berdasarkan data, hari kerja (Working Day) memiliki rata-rata jumlah peminjaman yang lebih tinggi, dibandingkan dengan hari libur/akhir pekan (Weekend/Holiday). Puncak aktivitas kemungkinan terjadi pada jam sibuk, yakni pagi dan sore, menunjukkan bahwa banyak pengguna memanfaatkan sepeda sebagai  transportasi untuk bekerja atau sekolah.
+""")
+
+st.subheader('Rekomendasi Insight 1')
+st.markdown("""
+- Fokuskan distribusi armada di area permukiman dan pusat bisnis pada hari kerja, terutama di jam sibuk pagi dan sore.
+- Terapkan rotasi armada pada siang hari (waktu off-peak) ke lokasi yang lebih membutuhkan, guna meningkatkan efisiensi penggunaan unit sepeda.
+-  Hari libur/akhir pekan: distribusikan sepeda ke area rekreasi, taman, dan kawasan wisata karena tren peminjaman bergeser ke aktivitas santai.
+- Jadwalkan perawatan/maintenance sepeda di waktu pagi atau malam saat jumlah peminjaman menurun, agar tidak mengganggu layanan operasional utama.
+""")
+
+st.subheader('Insight 2')
+st.markdown("""
+ Cuaca memiliki dampak yang signifikan terhadap tingkat peminjaman. Pada cuaca Clear (cerah), jumlah peminjaman melonjak tinggi. Sebaliknya, pada cuaca Light Snow/Rain (Hujan ringan/Salju/gerimis), jumlah peminjaman menurun drastis. Kondisi Mist/Cloudy (Berkabut/Berawan) masih relatif tinggi tapi menurun sedikit dibanding ketika cuaca cerah, menunjukkan bahwa Light Snow/Rain (Hujan ringan/Salju/gerimis) memiliki dampak penurunan yang paling tajam. Sedangkan ketika cuaca di kondisi paling buruk yaitu Heavy rain/Snow (Hujan Badai) hampir tidak ada orang yang meminjam sepeda
+""")
+
+st.subheader('Rekomendasi Insight 2')
+st.markdown("""
+- Luncurkan promosi khusus seperti diskon, bundling perjalanan, atau poin reward saat cuaca cerah atau prakiraan cuaca mendukung, untuk memaksimalkan pendapatan.
+- Terapkan tarif insentif (diskon) saat kondisi cuaca kurang ideal (gerimis) untuk mendorong pengguna tetap menyewa dan menjaga pendapatan tetap stabil.
+-  Gunakan data prakiraan cuaca harian untuk mengoptimalkan distribusi armada, serta siapkan strategi penyesuaian armada saat cuaca buruk (misalnya pengurangan unit aktif atau penyimpanan aman di shelter).
 """)
 
 # Kesimpulan
 st.subheader('Conlusion')
 st.markdown("""
-- **Working Day** Armada sepeda harus difokuskan pada area permukiman dan pusat bisnis pada jam sibuk pagi dan sore.
-- **Holiday** Perlu distribusi sepeda yang lebih merata ke area rekreasi, taman, dan pusat wisata.
-- **Strategi Promosi** Lakukan promosi aktif saat cuaca cerah atau prakiraan cuaca mendukung, seperti diskon atau bundling perjalanan.
-- **Penyesuaian Tarif** Bisa diberlakukan tarif insentif saat cuaca mendung atau kurang ideal untuk mendorong pemakaian.
-- **Operasional** Optimalkan distribusi sepeda saat cuaca baik, dan siapkan pengurangan armada atau penjadwalan ulang saat cuaca buruk diperkirakan.
+- Meningkatkan efisiensi operasional melalui penjadwalan armada yang lebih cerdas.
+- Meningkatkan kepuasan pelanggan dengan ketersediaan sepeda yang tepat waktu dan di lokasi strategis.
+- Meningkatkan potensi pendapatan dengan strategi tarif dan promosi berbasis data cuaca dan waktu.
 """)
